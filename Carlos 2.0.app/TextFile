@@ -1,0 +1,844 @@
+(*
+
+Author: Marshall Nielsen
+Based on a previous program by Josh Canlas
+Created: August 15, 2019
+Company: GetOut Games
+
+Author: Colin Rubow
+Updated: June 18, 2021
+Updated: July 13, 2021 set baud rate to 2400
+See SpaceDocumentation for documentation
+
+*)
+--Sets each port to a default value of 1, meaning that it isn't connected yet
+global teleportPort
+set teleportPort to 1
+global lightsPort
+set lightsPort to 1
+global plugPort
+set plugPort to 1
+global booleanPort
+set booleanPort to 1
+global emergencypowerPort
+set emergencypowerPort to 1
+global switchboardPort
+set switchboardPort to 1
+
+--Set initial values
+set done to 0
+
+--say "Welcome to Boss Carlos woot woot"
+--Opening Sequence
+
+display dialog "Hola! Soy Carlos 2.0! What would you like me to do?" buttons {"Walk Me Through Setup", "Walk Me Through Reset", "Start Game"} default button "Start Game" with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+
+--Set up instructions:
+if the button returned of the result is "Walk Me Through Setup" then
+	display dialog "Turn everything on! 1) Turn on the power strips (There's a brown one and black one) underneath the hologram (turns on printer, stars, and TVs). 2) Plug in captain's computer, lights, and puzzles (found in teleportation room). 3) Plug in the plumber camera into Superhero computer. 4) Unplug and replug printer (black box on the wall next to this computer). 5) Plug in the fans." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "Now just go through the room and make sure that all switches are off, everything is locked, the keys are hidden in the right place, and the room looks clean. Make sure that there are two emergency manuals, 4 cords, and 3 flashlights inside the toolbox." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "Time to set up the captain's computer. Go to the computer and type in: cd Desktop/Space_Room. Hit ENTER. Then type in: python mainframe.py. Hit ENTER. This will initiate the captain's computer." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "Alright, that's it! All you have to do now is go to Set Gameplay Phase and click Set Up and I will take care of the rest." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	
+else if button returned of the result is "Walk Me Through Reset" then
+	display dialog "Alright, everything should be plugged in right now. What you need to do is just reset the puzzles. Let's get started." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "1) Turn all of the switches OFF on the conclusion and circuit scrambler puzzles. 2) Lock the head space and put the key in the ball. The ball goes inside the wall maze. 3) Lock the wall maze. The key goes inside the crawl space. 4) Unplug all of the wires underneath the crawl space. 5) Put 4 cords inside the tool box. Put 3 inside the Fan outlet. Leave two inside the crawl space. 6) Make sure that the key for the wall maze, 2 cords, and the teleportation tool is inside the crawl space. Lock the crawl space. This key will go inside the Fan outlet. 7) Make sure there are 3 cords and the key to the crawl space inside the Fans outlet. Lock the outlet. The combination is 7205. 8) Go to the captain's computer. Hit CTRL and Z at the same time. Now type in: python mainframe.py. Hit ENTER. This will reset the captain's computer." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "Unplug the lasers and plug in the fans." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	display dialog "Alright, that's it! All you have to do now is go to Set Gameplay Phase and click Set Up and I will take care of the rest." buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+end if
+
+open_teleportPort("/dev/cu.usbmodem141401")
+clear_buffer(teleportPort)
+open_lightsPort("/dev/cu.usbmodem141301")
+clear_buffer(lightsPort)
+open_plugPort("/dev/cu.usbmodem1412101")
+clear_buffer(plugPort)
+open_booleanPort("/dev/cu.usbmodem1412201")
+clear_buffer(booleanPort)
+open_emergencypowerPort("/dev/cu.usbmodem1412301")
+clear_buffer(emergencypowerPort)
+open_switchboardPort("/dev/cu.usbmodem1412401")
+clear_buffer(switchboardPort)
+
+
+-- Loop to run while the program is open
+repeat while done = 0
+	
+	--MAIN DIALOG
+	display dialog "Select what you would like to do:" buttons {"Go To Game Menu", "Go Home For The Day"} with title "Carlos 2.0" with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	--_________________________________________________________________________________________
+	
+	if the button returned of the result is "Go To Game Menu" then
+		
+		--List of choices (add the video selection on here)
+		(* "Print Conclusion Instructions" , "Warp Back to Earth (Success)", "Late Groups", "Special Messages", *)
+		--TODO: Talk about "special messages" / "Late Groups"
+		set answer to choose from list {"Set Up", "Phase 1", "Phase 2", "Phase 3", "Blow Up the Spaceship (Fail/Taunt)", "Get time passed", "Give 5 more minutes", "Lights Menu", "NASA Message Menu", "Phase One Puzzles", "Warp Back to Earth (Success)", "Go Home For The Day"} with title "Game Menu" with prompt "What would you like to do?" without multiple selections allowed
+		
+		if answer is {"Set Up"} then
+			-- Check to make sure they're ready
+			display dialog "Take a moment to finish everything you might have been doing in Safari. I'm going to close that application. ****Remember to never use Safari on this computer because I need it to run rooms. PLEASE MAKE SURE THAT THE TELEPORTER SWITCH IS OFF!" buttons {"Done"} default button "Done" with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+			log ("starting Set Up")
+			
+			with timeout of 3600 seconds
+				tell application "Terminal"
+					quit
+					delay 2
+					activate
+					delay 1
+					do script "cd Desktop/Space_Room_Back_Room_Stuff/NASA_Messages/"
+					delay 1
+				end tell
+			end timeout
+			
+			ping_http("http://192.168.43.30:5000/finish-clear")
+			ping_http("http://192.168.43.20:5000/finish-clear")
+			ping_http("http://192.168.43.30:5000/play/overearth.mp4")
+			
+			delay 1
+			turn_off(booleanPort)
+			delay 2
+			turn_off(switchboardPort)
+			delay 2
+			turn_off(emergencypowerPort)
+			delay 2
+			trigger_lights("33")
+			delay 3
+			trigger_lights("3 1")
+			delay 3
+			trigger_lights("5 1")
+			delay 3
+			
+			-- Activate Carl
+			activateCarlos()
+			delay 2
+			
+			
+		else if answer is {"Phase 1"} then
+			set keepGoing to true
+			repeat while (keepGoing)
+				
+				
+				check_phase1_puzzles()
+				
+				ping_http("http://192.168.43.30:5000/play/overearth.mp4")
+				delay 2
+				
+				repeat
+					if is_solved(teleportPort) is equal to 1 then
+						exit repeat
+					end if
+				end repeat
+				
+				
+				--teleport
+				trigger_lights("4")
+				ping_http("http://192.168.43.20:5000/play-audio/teleport.mp3")
+				delay 31
+				ping_http("http://192.168.43.20:5000/play-audio/steam_release.mp3")
+				delay 27
+				
+				--story intro sequence
+				ping_http("http://192.168.43.20:5000/play/Safety_Video_CUT.mp4")
+				delay 100
+				ping_http("http://192.168.43.20:5000/play-audio/warp.mp3")
+				ping_http("http://192.168.43.30:5000/play/warp.mp4")
+				delay 20
+				ping_http("http://192.168.43.30:5000/play/deepspace.mov")
+				delay 15
+				ping_http("http://192.168.43.20:5000/play/Alien_1.mp4")
+				delay 71
+				ping_http("http://192.168.43.20:5000/play-audio/teleport.mp3")
+				delay 31
+				ping_http("http://192.168.43.20:5000/play-audio/steam_release.mp3")
+				delay 8
+				ping_http("http://192.168.43.20:5000/play-audio/missile_impact.mp3")
+				delay 18
+				ping_http("http://192.168.43.20:5000/start-timer")
+				ping_http("http://192.168.43.20:5000/play/Alien_2.mp4")
+				delay 52
+				ping_http("http://192.168.43.20:5000/play-audio/ambient.mp3")
+				delay 2
+				
+				--lights to first puzzle
+				print_message("NASA_Message")
+				
+				
+				
+				
+				
+				set timeFlag to (time of (current date))
+				turn_on(emergencypowerPort)
+				delay 2
+				trigger_lights("7 1")
+				delay 2
+				check_progress()
+				delay 8
+				
+				repeat while true
+					if is_solved(emergencypowerPort) is equal to 1 then
+						exit repeat
+					end if
+					if ((time of (current date)) - timeFlag is greater than 300) then
+						set keepGoing to abortPhaseOne()
+						if (keepGoing is equal to false) then
+							exit repeat
+						end if
+						set timeFlag to (time of (current date))
+					end if
+				end repeat
+				
+				if (keepGoing is equal to true) then
+					trigger_lights("8 1")
+					delay 10
+					turn_on(switchboardPort)
+					delay 2
+					turn_on(booleanPort)
+					delay 2
+					check_progress()
+					check_phase1_puzzles()
+					
+					set booleanIsSolved to 0
+					set serialBoolean to 0
+					set plugIsSolved to 0
+					set serialPlug to 0
+					set switchboardIsSolved to 0
+					set serialSwitchboard to 0
+					
+					set timeFlag to (time of (current date))
+					repeat while true
+						set serialBoolean to is_solved(booleanPort)
+						if serialBoolean is equal to 1 then
+							set booleanIsSolved to 1
+							delay 1
+							trigger_lights("9 1")
+							delay 1
+							check_progress()
+						else if serialBoolean is equal to 0 then
+							set booleanIsSolved to 0
+							delay 1
+							trigger_lights("9 2")
+							delay 1
+							check_progress()
+						end if
+						delay 1
+						set serialPlug to is_solved(plugPort)
+						if serialPlug is equal to 1 then
+							set plugIsSolved to 1
+							delay 1
+							trigger_lights("10 1")
+							delay 1
+							check_progress()
+						else if serialPlug is equal to 0 then
+							set plugIsSolved to 0
+							delay 1
+							trigger_lights("10 2")
+							delay 1
+							check_progress()
+						end if
+						delay 1
+						set serialSwitchboard to is_solved(switchboardPort)
+						if serialSwitchboard is equal to 1 then
+							set switchboardIsSolved to 1
+							delay 1
+							trigger_lights("11 1")
+							delay 1
+							check_progress()
+						else if serialSwitchboard is equal to 0 then
+							set switchboardIsSolved to 0
+							delay 1
+							trigger_lights("11 2")
+							delay 1
+							check_progress()
+						end if
+						delay 1
+						if booleanIsSolved is equal to 1 and plugIsSolved is equal to 1 and switchboardIsSolved is equal to 1 then
+							exit repeat
+						end if
+						
+						if ((time of (current date)) - timeFlag is greater than 300) then
+							set keepGoing to abortPhaseOne()
+							if (keepGoing is equal to false) then
+								exit repeat
+							end if
+							set timeFlag to (time of (current date))
+						end if
+						
+					end repeat
+					
+					if (keepGoing is equal to true) then
+						delay 20
+						trigger_lights("6 1")
+						delay 5
+						trigger_lights("12 1")
+						delay 2
+						check_progress()
+						set keepGoing to false
+					end if
+					
+				end if
+				
+			end repeat
+			activateCarlos()
+			
+			
+			
+		else if answer is {"Phase 2"} then
+			
+			print_message("Encrypted_Message")
+			activateCarlos()
+			
+			
+		else if answer is {"Phase 3"} then
+			(*tell application "iTunes"
+				activate
+				pause
+			end tell
+			delay 0.5*)
+			--play_video1("Hologram/Game_Over", 31)
+			ping_http("http://192.168.43.20:5000/enable-messages")
+			ping_http("http://192.168.43.30:5000/enable-messages")
+			ping_http("http://192.168.43.20:5000/play-audio/teleport.mp3")
+			delay 31
+			
+			--TODO: FIX THIS
+			--play_audio(7)
+			ping_http("http://192.168.43.20:5000/play-audio/steam_release.mp3")
+			delay 8
+			ping_http("http://192.168.43.20:5000/play/Alien_3.mp4")
+			delay 33
+			ping_http("http://192.168.43.20:5000/play-audio/ambient.mp3")
+			delay 2
+			print_message("Conclusion_Captain")
+			delay 4
+			print_message("Conclusion_Navigation")
+			delay 4
+			print_message("Conclusion_Communication")
+			delay 4
+			print_message("Conclusion_Engineer")
+			delay 4
+			--play_audio(1) --plays background music (which we need to change to something more intense)
+			delay 2
+			activateCarlos()
+			
+		else if answer is {"Blow Up the Spaceship (Fail/Taunt)"} then
+			delay 2
+			ping_http("http://192.168.43.20:5000/play-audio/missile_impact.mp3")
+			--play_audio(5)
+			activateCarlos()
+			
+		else if answer is {"Get time passed"} then
+			ping_http("http://192.168.43.20:5000/start-timer")
+			display dialog "I know this is ghetto... But the terminal (that black window with the >_ at the bottom of the screen) Just printed the status of the timer... Check it there, remember the amount of time left is 50 minus the number that it printed (It's formated as (HOURS):(MINUTES):(SECONDS).MILISECONDS)" buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+			activateCarlos()
+			
+			
+		else if answer is {"Give 5 more minutes"} then
+			set answer to choose from list {"DO IT!", "Wait... Never mind."} with title "Are you sure?" with prompt "If less than 5 minutes has passed strange things will happen..." without multiple selections allowed
+			if answer is {"DO IT!"} then
+				ping_http("192.168.43.20:5000/give-more-time/300")
+				delay 3
+				ping_http("http://192.168.43.20:5000/play-audio/ambient.mp3")
+			end if
+			activateCarlos()
+			
+			
+			
+		else if answer is {"Lights Menu"} then
+			turn_on_off_lights()
+			activateCarlos()
+			
+			
+		else if answer is {"NASA Message Menu"} then
+			
+			set answer to choose from list {"Message 1 (Success)", "Message 1 (Failure)", "Message 2", "NASA Message", "Conclusion Instructions", "Custom"} with title "NASA Message Menu" with prompt "What would you like to do?" without multiple selections allowed
+			
+			if answer is {"Message 1 (Success)"} then
+				print_message("Announcement_Success")
+				
+			else if answer is {"Message 1 (Failure)"} then
+				print_message("Announcement_Failure")
+				
+			else if answer is {"Message 2"} then
+				print_message("Announcement_Final")
+				
+			else if answer is {"NASA Message"} then
+				print_message("NASA_Message")
+				
+			else if answer is {"Conclusion Instructions"} then
+				delay 1
+				print_message("Conclusion_Captain")
+				delay 4
+				print_message("Conclusion_Navigation")
+				delay 4
+				print_message("Conclusion_Communication")
+				delay 4
+				print_message("Conclusion_Engineer")
+				delay 4
+				
+			else if answer is {"Custom"} then
+				set theResponse to display dialog "Enter custom NASA message:" default answer "" with icon note buttons {"Don't Send", "Send"} default button "Send"
+				set message to text returned of theResponse
+				with timeout of 3600 seconds
+					tell application "Terminal"
+						activate
+						delay 0.5
+						do script ("echo Incoming message from NASA: > /Users/getoutgames/Documents/custom_message.txt") in front window
+						do script ("echo  >> /Users/getoutgames/Documents/custom_message.txt") in front window
+						do script ("echo " & message & " >> /Users/getoutgames/Documents/custom_message.txt") in front window
+						
+						repeat 30 times
+							do script ("echo  >> /Users/getoutgames/Documents/custom_message.txt") in front window
+						end repeat
+						
+						do script ("echo . >> /Users/getoutgames/Documents/custom_message.txt") in front window
+						
+						delay 2
+						do script ("lpr /Users/getoutgames/Documents/custom_message.txt") in front window
+					end tell
+				end timeout
+			end if
+			activateCarlos()
+			
+		else if answer is {"Phase One Puzzles"} then
+			turn_on_off_phase1_puzzles()
+			activateCarlos()
+			
+		else if answer is {"Warp Back to Earth (Success)"} then
+			ping_http("http://192.168.43.30:5000/win")
+			delay 2
+			ping_http("http://192.168.43.20:5000/win")
+			activateCarlos()
+			
+			
+		else if answer is {"Go Home For The Day"} then
+			go_home()
+			
+			
+		end if
+		
+		
+	else if the button returned of the result is "Go Home For The Day" then
+		go_home()
+	end if
+	
+	
+	
+end repeat
+
+
+
+
+-- _________________________________________________________________________________________
+-- FUNCTIONS
+
+--yes, each port needs their own function, because global variables can only be defined once
+
+on open_teleportPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set teleportPort to serialport open use_port bps rate 19200 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if teleportPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_teleportPort
+
+on open_lightsPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set lightsPort to serialport open use_port bps rate 9600 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if lightsPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_lightsPort
+
+on open_plugPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set plugPort to serialport open use_port bps rate 19200 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if plugPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_plugPort
+
+on open_booleanPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set booleanPort to serialport open use_port bps rate 19200 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if booleanPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_booleanPort
+
+on open_emergencypowerPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set emergencypowerPort to serialport open use_port bps rate 19200 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if emergencypowerPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_emergencypowerPort
+
+on open_switchboardPort(address)
+	-- Open Serial Port (Delays are to give the computer time to execute each task)
+	delay 0.5
+	set use_port to address --this serial port is to the comms arduino
+	delay 0.5
+	if (get serialport list) contains use_port then --checks to see if arduino is plugged in
+		delay 0.5
+		set switchboardPort to serialport open use_port bps rate 19200 data bits 8 parity 0 stop bits 1 handshake 0 --Connects to the arduino
+		delay 0.5
+		if switchboardPort = -1 then --Check the port opened correctly
+			display alert "The port " & use_port & "opened incorrectly. Carlos will close. Please unplug the USB cord labeled " & use_port & "(match the last 5 digits to the correct port), plug it back in, wait 10 seconds, and restart Carlos."
+			stop_execution() --closes Carlos
+		end if
+	else --if arduino isn't plugged in
+		display alert "Arduino not found at " & address
+		stop_execution()
+	end if
+end open_switchboardPort
+
+on clear_buffer(portname)
+	repeat while ((serialport bytes available portname) is greater than 0)
+		serialport read portname
+	end repeat
+end clear_buffer
+
+on is_solved(portname)
+	if ((serialport bytes available portname) is greater than 0) then -- check for incoming serial messages on the specified port
+		set epistle to serialport read portname
+		if epistle is equal to "0" then
+			--display alert "unsolved"
+			return 0
+		else if epistle is equal to "1" then
+			--display alert "solved"
+			return 1
+		end if
+	end if
+	return 2
+end is_solved
+
+
+on turn_off(portname)
+	serialport write "2" to portname -- turns off the puzzle if applicable (only boolean board and switchboard)
+end turn_off
+
+
+on turn_on(portname)
+	serialport write "1" to portname -- turns on the puzzle if applicable (only boolean board and switchboard)
+end turn_on
+
+
+on trigger_lights(command)
+	serialport write command to lightsPort
+end trigger_lights
+
+on abortPhaseOne()
+	set answer to choose from list {"Yes", "No, don't abort"} with title "Abort Phase 1?" with prompt "Do you want to abort phase 1 and return to the Carlos menu? (Warning:: this dialog is blocking the Carlos code, you need to respond to this prompt and not keep this window open to ensure Carlos is listening to the puzzles.)" without multiple selections allowed
+	if answer is {"Yes"} then
+		set answer to choose from list {"Yes", "No, my mistake"} with title "Are you sure?" without multiple selections allowed
+		if answer is {"Yes"} then
+			return false
+		else
+			return true
+		end if
+	else
+		return true
+	end if
+end abortPhaseOne
+
+on check_progress()
+	repeat while true
+		set answer to choose from list {"Yes", "No", "No, but continue anyway"} with title "Progress Checkpoint" with prompt "Have the appropriate lights turned on/off? (Warning:: this dialog is blocking the Carlos code, you need to respond to this prompt and not keep this window open to ensure Carlos is listening to the puzzles.)" without multiple selections allowed
+		if answer is {"Yes"} then
+			return
+		else if answer is {"No"} then
+			turn_on_off_lights()
+		else if answer is {"No, but continue anyway"} then
+			return
+		end if
+	end repeat
+end check_progress
+
+on check_phase1_puzzles()
+	repeat while true
+		set answer to choose from list {"Yes", "No", "No, but continue anyway"} with title "Puzzle Check" with prompt "Have the phase one puzzles turned on/off correctly? (Warning:: this dialog is blocking the Carlos code, you need to respond to this prompt and not keep this window open to ensure Carlos is listening to the puzzles.)" without multiple selections allowed
+		if answer is {"Yes"} then
+			return
+		else if answer is {"No"} then
+			turn_on_off_phase1_puzzles()
+		else if answer is {"No, but continue anyway"} then
+			return
+		end if
+	end repeat
+end check_phase1_puzzles
+
+--this function is to reduce repeated code
+on turn_on_off_lights()
+	set answer to choose from list {"All", "Teleporter", "Main Lights", "Emergency Power to Rerouter", "Rerouter to puzzles", "Boolean Logic Board to Crackle Tube", "Wall Plug to Crackle Tube", "Switchboard to Crackle Tube", "Crackle Tube", "Crackle Tube to Walls"} with title "Lights Menu" with prompt "What would you like to do?" without multiple selections allowed
+	if answer is {"All"} then
+		set answer to choose from list {"On", "Off"} with title "All" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("3 1")
+			delay 2.5
+			trigger_lights("5 1")
+			delay 2.5
+			trigger_lights("6 1")
+			delay 2.5
+			trigger_lights("7 1")
+			delay 2.5
+			trigger_lights("8 1")
+			delay 2.5
+			trigger_lights("9 1")
+			delay 2.5
+			trigger_lights("10 1")
+			delay 2.5
+			trigger_lights("11 1")
+			delay 2.5
+			trigger_lights("12 1")
+		else if answer is {"Off"} then
+			trigger_lights("33")
+		end if
+		
+	else if answer is {"Teleporter"} then
+		set answer to choose from list {"Test", "Nevermind"} with title "Teleporter" without multiple selections allowed
+		if answer is {"Test"} then
+			trigger_lights("4")
+		end if
+		
+	else if answer is {"Main Lights"} then
+		set answer to choose from list {"On", "Off", "Emergency"} with title "Main Lights" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("5 1")
+		else if answer is {"Off"} then
+			trigger_lights("5 2")
+		else if answer is {"Emergency"} then
+			trigger_lights("5 3")
+		end if
+		
+	else if answer is {"Emergency Power to Rerouter"} then
+		set answer to choose from list {"On", "Off"} with title "Emergency Power to Rerouter" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("7 1")
+		else if answer is {"Off"} then
+			trigger_lights("7 2")
+		end if
+		
+	else if answer is {"Rerouter to Puzzles"} then
+		set answer to choose from list {"On", "Off"} with title "Rerouter to Puzzles" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("8 1")
+		else if answer is {"Off"} then
+			trigger_lights("8 2")
+		end if
+		
+	else if answer is {"Boolean Logic Board to Crackle Tube"} then
+		set answer to choose from list {"On", "Off"} with title "Boolean Logic Board to Crackle Tube" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("9 1")
+		else if answer is {"Off"} then
+			trigger_lights("9 2")
+		end if
+		
+	else if answer is {"Wall Plug to Crackle Tube"} then
+		set answer to choose from list {"On", "Off"} with title "Wall Plug to Crackle Tube" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("10 1")
+		else if answer is {"Off"} then
+			trigger_lights("10 2")
+		end if
+		
+	else if answer is {"Switchboard to Crackle Tube"} then
+		set answer to choose from list {"On", "Off"} with title "Switchboard to Crackle Tube" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("11 1")
+		else if answer is {"Off"} then
+			trigger_lights("11 2")
+		end if
+		
+	else if answer is {"Crackle Tube"} then
+		set answer to choose from list {"On", "Off"} with title "Crackle Tube" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("6 1")
+		else if answer is {"Off"} then
+			trigger_lights("6 2")
+		end if
+		
+	else if answer is {"Crackle Tube to Walls"} then
+		set answer to choose from list {"On", "Off"} with title "Crackle Tube to Walls" without multiple selections allowed
+		if answer is {"On"} then
+			trigger_lights("12 1")
+		else if answer is {"Off"} then
+			trigger_lights("12 2")
+		end if
+		
+	end if
+end turn_on_off_lights
+
+-- this function also reduces repeated code
+on turn_on_off_phase1_puzzles()
+	set answer to choose from list {"Emergency Power Rerouter", "Boolean Logic Board", "Switchboard"} with title "Phase One Puzzles" without multiple selections allowed
+	
+	if answer is {"Emergency Power Rerouter"} then
+		set answer to choose from list {"On", "Off"} with title "Emergency Power Rerouter" without multiple selections allowed
+		if answer is {"On"} then
+			turn_on(emergencypowerPort)
+		else if answer is {"Off"} then
+			turn_off(emergencypowerPort)
+		end if
+		
+	else if answer is {"Boolean Logic Board"} then
+		set answer to choose from list {"On", "Off"} with title "Boolean Logic Board" without multiple selections allowed
+		if answer is {"On"} then
+			turn_on(booleanPort)
+		else if answer is {"Off"} then
+			turn_off(booleanPort)
+		end if
+		
+	else if answer is {"Switchboard"} then
+		set answer to choose from list {"On", "Off"} with title "Switchboard" without multiple selections allowed
+		if answer is {"On"} then
+			turn_on(switchboardPort)
+		else if answer is {"Off"} then
+			turn_off(switchboardPort)
+		end if
+		
+	end if
+end turn_on_off_phase1_puzzles
+
+on go_home()
+	display dialog "Please make sure that the room has been reset properly. Once everything's been reset, please turn off the TVs, turn off the power strip, unplug the conclusion, unplug the captain's computer, lights, and puzzles, unplug the plumber camera from Superhero, and unplug the lasers/fans. Alright, have a good one!" buttons {"Done"} default button {"Done"} with icon file ("GGTEC:Users:getoutgames:Desktop:Space_Room_Back_Room_Stuff:Carlos_Edit.ico")
+	
+	--close Terminal
+	tell application "Terminal"
+		quit
+	end tell
+	delay 3
+	trigger_lights("33")
+	delay 2
+	turn_off(switchboardPort)
+	delay 2
+	turn_off(booleanPort)
+	delay 2
+	
+	
+	stop_execution()
+end go_home
+
+
+on print_message(filename)
+	with timeout of 1800 seconds
+		tell application "Terminal"
+			activate
+			delay 0.5
+			do script ("lpr /Users/getoutgames/Desktop/Space_Room_Back_Room_Stuff/NASA_Messages/" & filename & ".pdf") in front window
+			delay 0.5
+		end tell
+	end timeout
+	
+	-- Activate Carl
+	activateCarlos()
+	
+end print_message
+
+on ping_http(address)
+	--- something formated like http://192.168.43.20:5000/start-timer
+	with timeout of 3600 seconds
+		tell application "Terminal"
+			activate
+			delay 0.5
+			do script ("curl --interface en0 " & address) in front window
+			delay 0.5
+		end tell
+	end timeout
+end ping_http
+
+
+on stop_execution()
+	delay 1
+	try
+		serialport close teleportPort
+	end try
+	delay 1
+	try
+		serialport close lightsPort
+	end try
+	delay 1
+	try
+		serialport close plugPort
+	end try
+	delay 1
+	try
+		serialport close booleanPort
+	end try
+	delay 1
+	try
+		serialport close emergencypowerPort
+	end try
+	delay 1
+	try
+		serialport close switchboardPort
+	end try
+	delay 1
+	
+	error number -128
+	
+end stop_execution
+
+on activateCarlos()
+	with timeout of 3600 seconds
+		tell application "Carlos 2.0"
+			if it is running then activate
+		end tell
+	end timeout
+end activateCarlos
